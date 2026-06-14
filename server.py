@@ -495,6 +495,10 @@ async def chat(req: ChatRequest):
 async def upload_page():
     return (STATIC / "upload.html").read_text(encoding="utf-8")
 
+@app.get("/guide", response_class=HTMLResponse)
+async def docs_page():
+    return (STATIC / "docs.html").read_text(encoding="utf-8")
+
 # ── resume ingest ─────────────────────────────────────────────────────────────
 @app.post("/api/ingest/resume")
 async def ingest_resume(file: UploadFile = File(...)):

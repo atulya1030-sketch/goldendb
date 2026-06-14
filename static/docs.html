@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GoldenDB — Product Documentation</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--text:#111;--text2:#555;--border:#E5E5E5;--bg:#fff;--accent:#353395;--light:#F8F8FC}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+
+header{height:52px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px;position:sticky;top:0;background:#fff;z-index:10}
+.logo{font-size:15px;font-weight:700}.logo span{color:var(--text2);font-weight:400;margin-left:8px;font-size:13px}
+.nav a{font-size:12.5px;color:var(--text2);text-decoration:none;margin-left:16px;border:1px solid var(--border);border-radius:999px;padding:3px 12px}
+.nav a:hover{color:var(--text);border-color:#aaa}
+
+.layout{display:flex;max-width:1100px;margin:0 auto;padding:40px 20px;gap:48px}
+
+/* sidebar TOC */
+.toc{width:200px;flex-shrink:0;position:sticky;top:72px;align-self:flex-start;height:calc(100vh - 100px);overflow-y:auto}
+.toc-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;margin-bottom:12px}
+.toc a{display:block;font-size:12.5px;color:var(--text2);text-decoration:none;padding:4px 0;border-left:2px solid transparent;padding-left:10px;transition:all .15s}
+.toc a:hover{color:var(--text);border-color:var(--accent)}
+.toc-section{margin-top:10px}
+
+/* content */
+.content{flex:1;min-width:0;max-width:760px}
+
+h1{font-size:28px;font-weight:800;line-height:1.2;margin-bottom:8px}
+.subtitle{font-size:16px;color:var(--text2);margin-bottom:36px}
+
+h2{font-size:19px;font-weight:700;margin:48px 0 14px;padding-top:8px;border-top:1px solid var(--border)}
+h3{font-size:15px;font-weight:700;margin:24px 0 8px;color:var(--accent)}
+h4{font-size:13px;font-weight:700;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.06em;color:#888}
+p{font-size:14px;color:var(--text2);margin-bottom:12px}
+ul{padding-left:18px;margin-bottom:12px}
+li{font-size:14px;color:var(--text2);margin-bottom:5px}
+strong{color:var(--text);font-weight:600}
+
+/* page cards */
+.page-card{background:var(--light);border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:24px}
+.page-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.page-url{font-size:13px;font-weight:700;font-family:monospace;color:var(--accent);background:#EEF2FF;padding:4px 12px;border-radius:6px}
+.audience-tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:3px 10px;border-radius:999px}
+.tag-client{background:#DCFCE7;color:#15803D}
+.tag-internal{background:#FEF3C7;color:#92400E}
+.page-title{font-size:17px;font-weight:700;margin-bottom:6px}
+.page-desc{font-size:13.5px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.why-box{background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.6}
+.why-box strong{color:var(--text)}
+
+/* pipeline */
+.pipeline{display:flex;gap:0;margin:20px 0}
+.stage{flex:1;text-align:center;position:relative}
+.stage::after{content:'→';position:absolute;right:-10px;top:18px;font-size:18px;color:#ccc}
+.stage:last-child::after{display:none}
+.stage-dot{width:40px;height:40px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid}
+.s1{background:#F0FDF4;border-color:#86EFAC;color:#15803D}
+.s2{background:#FFF7ED;border-color:#FCD34D;color:#92400E}
+.s3{background:#EFF6FF;border-color:#93C5FD;color:#1D4ED8}
+.s4{background:#EEF2FF;border-color:#A5B4FC;color:#4338CA}
+.stage-label{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px}
+.stage-sub{font-size:10.5px;color:#888}
+
+/* tool table */
+.tool-table{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+.tool-table th{text-align:left;padding:8px 12px;background:#F4F4F5;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:#888;font-weight:700}
+.tool-table td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top}
+.tool-table td:first-child{font-family:monospace;font-size:12px;color:var(--accent);font-weight:600;white-space:nowrap}
+
+/* schema */
+.schema-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+@media(max-width:600px){.schema-grid{grid-template-columns:1fr}}
+.schema-group{background:#F8F8FC;border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.schema-group h4{margin-top:0;margin-bottom:8px}
+.schema-group ul{margin:0}
+
+/* stack */
+.stack-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.stack-chip{background:#F4F4F5;border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--text)}
+.stack-chip span{color:var(--text2);font-weight:400;margin-left:4px;font-size:12px}
+
+footer{border-top:1px solid var(--border);padding:24px 40px;font-size:12px;color:#aaa;text-align:center;margin-top:60px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GoldenDB <span>product documentation</span></div>
+  <div class="nav">
+    <a href="/">Recruiter Chat</a>
+    <a href="/source-chat">Sourcing</a>
+    <a href="/upload">Upload</a>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#what">What is GoldenDB</a>
+    <a href="#pipeline">Candidate Pipeline</a>
+    <div class="toc-section">
+      <div class="toc-title" style="margin-top:12px">Pages</div>
+      <a href="#recruiter-chat">/ Recruiter Chat</a>
+      <a href="#source-chat">/source-chat</a>
+      <a href="#source">/source</a>
+      <a href="#upload">/upload</a>
+      <a href="#profile">/profile/:id</a>
+    </div>
+    <div class="toc-section">
+      <div class="toc-title" style="margin-top:12px">Under the hood</div>
+      <a href="#tools">AI Tools</a>
+      <a href="#schema">Candidate Schema</a>
+      <a href="#stack">Tech Stack</a>
+    </div>
+  </div>
+
+  <!-- Main content -->
+  <div class="content">
+
+    <h1>GoldenDB</h1>
+    <p class="subtitle">Recruiter intelligence platform for AI/data talent in India — built on a vector database, powered by GPT-4o, with automated candidate sourcing from GitHub and Apollo.</p>
+
+    <!-- WHAT IS -->
+    <h2 id="what">What is GoldenDB</h2>
+    <p>GoldenDB is a talent intelligence platform built specifically for recruiting AI and data engineering professionals in India. It replaces the traditional recruiter workflow of manually screening LinkedIn profiles and spreadsheets with a conversational AI layer on top of a deeply structured candidate database.</p>
+    <p>Every candidate in GoldenDB has a rich profile — not just name and title, but technical depth scores, system-level signals (what they've actually built), behavioural calibration, compensation bands, retention probabilities, and pipeline history. The AI can reason across all of these fields to answer complex recruiting questions in seconds.</p>
+    <p>There are two sides to the platform: <strong>client-facing</strong> (what recruiters and hiring managers see) and <strong>internal</strong> (how GoldenDB staff source and build the candidate pool).</p>
+
+    <!-- PIPELINE -->
+    <h2 id="pipeline">Candidate Pipeline</h2>
+    <p>Every candidate moves through four stages. Only stage 4 candidates are visible to clients. Stages 1–3 are internal work-in-progress.</p>
+
+    <div class="pipeline">
+      <div class="stage">
+        <div class="stage-dot s1">1</div>
+        <div class="stage-label">Sourced</div>
+        <div class="stage-sub">GitHub + Apollo<br>contact info only</div>
+      </div>
+      <div class="stage">
+        <div class="stage-dot s2">2</div>
+        <div class="stage-label">Resume Parse</div>
+        <div class="stage-sub">PDF uploaded<br>GPT-4o extracts fields</div>
+      </div>
+      <div class="stage">
+        <div class="stage-dot s3">3</div>
+        <div class="stage-label">Enriched</div>
+        <div class="stage-sub">GitHub · SO · Kaggle<br>HuggingFace signals</div>
+      </div>
+      <div class="stage">
+        <div class="stage-dot s4">4</div>
+        <div class="stage-label">Panel Complete</div>
+        <div class="stage-label" style="font-size:10px;color:#4338CA">CLIENT READY</div>
+        <div class="stage-sub">Interview done<br>all scores verified</div>
+      </div>
+    </div>
+
+    <ul>
+      <li><strong>Stage 1 (sourced):</strong> Candidate discovered via GitHub search or Apollo. We have their GitHub handle, email, phone, LinkedIn, and whatever public data GitHub exposes. No resume yet.</li>
+      <li><strong>Stage 2 (resume_parse):</strong> Resume PDF uploaded. GPT-4o extracts all structured fields — title, company, skills with scores, systems built, compliance exposure, education, compensation expectations.</li>
+      <li><strong>Stage 3 (enriched):</strong> Cross-platform enrichment run. GitHub stars/followers added, Kaggle competition tier noted, Stack Overflow reputation and top tags pulled, HuggingFace models and downloads logged. Depth and composite scores updated.</li>
+      <li><strong>Stage 4 (panel_complete):</strong> Internal panel interview completed. All scores are verified by a human. Candidate is client-ready and searchable in the recruiter chat.</li>
+    </ul>
+
+    <!-- RECRUITER CHAT -->
+    <h2 id="recruiter-chat">Pages</h2>
+
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="page-url">/ &nbsp; (root)</div>
+        <span class="audience-tag tag-client">Client-facing</span>
+      </div>
+      <div class="page-title">Recruiter Chat</div>
+      <div class="page-desc">A conversational interface where recruiters and hiring managers search the verified candidate pool. Powered by GPT-4o with three specialised tools: semantic candidate search, market aggregation, and full profile lookup. Responses stream in real time via SSE.</div>
+      <h4>What it can do</h4>
+      <ul>
+        <li>Find candidates by role, city, skills, notice period, budget, compliance exposure, or any combination</li>
+        <li>Build teams — "give me a 4-person data team: staff DE, ML engineer, analytics lead, MLOps"</li>
+        <li>Answer market questions — "which Indian city has the most relocatable fintech engineers?"</li>
+        <li>Surface hidden gems — "who undersells on paper but scored high in panel?"</li>
+        <li>Every result links to the full candidate profile page</li>
+      </ul>
+      <h4>Why we built it this way</h4>
+      <div class="why-box">
+        Recruiters don't think in SQL. They think in natural language — "senior engineer, Bengaluru, not FAANG-locked, can join in 30 days." A chat interface lets them express exactly that. The underlying vector search + hard filters combination means semantic intent AND hard constraints are both respected simultaneously. The AI relaxes filters automatically when results are too narrow and always explains what it changed.
+      </div>
+    </div>
+
+    <!-- SOURCE CHAT -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="page-url">/source-chat</div>
+        <span class="audience-tag tag-internal">Internal only</span>
+      </div>
+      <div class="page-title">Sourcing Copilot</div>
+      <div class="page-desc">A conversational sourcing tool for the GoldenDB team to discover new candidates from GitHub. Type what kind of engineer you're looking for, and the AI searches GitHub, scores every profile, enriches with Apollo contact data (email, phone, LinkedIn), and presents results you can save directly into the pipeline.</div>
+      <h4>What it can do</h4>
+      <ul>
+        <li>Search GitHub by role, city, skills, seniority in natural language</li>
+        <li>Score up to 50 profiles per query on followers, stars, location, activity, language match</li>
+        <li>Return top 15 with Apollo-enriched contact info (email, phone, LinkedIn)</li>
+        <li>Flags guessed emails (not verified) so you know before you outreach</li>
+        <li>Save any or all candidates to GoldenDB with one message ("save the top 3")</li>
+        <li>Refine in conversation — "remove FAANG", "only score 12+", "now find similar in Mumbai"</li>
+        <li>Saved candidates enter the pipeline at stage 1 and work their way to client-ready</li>
+      </ul>
+      <h4>Why we built it this way</h4>
+      <div class="why-box">
+        GitHub is the most honest signal for an AI/data engineer — what they've actually built, in public, over years. LinkedIn tells you job titles. GitHub tells you depth. The scoring system weights followers, stars, recent activity, and language match so we spend Apollo enrichment credits only on genuinely strong profiles. A chat interface lets the sourcer iterate quickly without filling out forms.
+      </div>
+    </div>
+
+    <!-- SOURCE FORM -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="page-url">/source</div>
+        <span class="audience-tag tag-internal">Internal only</span>
+      </div>
+      <div class="page-title">Form-Based Sourcing</div>
+      <div class="page-desc">The same sourcing pipeline as /source-chat but presented as a traditional search form. Type a query, hit Search, and candidate cards stream in one by one as GitHub profiles are fetched and Apollo contact data is added. Each card has an "Add to GoldenDB" button.</div>
+      <h4>What it can do</h4>
+      <ul>
+        <li>Same GitHub search + scoring + Apollo enrichment as the sourcing chat</li>
+        <li>Results stream in progressively — cards appear as they're processed</li>
+        <li>Score badge on each card (Strong / Good) so you can quickly skip weak profiles</li>
+        <li>Contact info shown inline: email (with verified/guessed status), phone, LinkedIn, GitHub</li>
+        <li>"Save all" button to bulk-add the entire result set to the pipeline</li>
+      </ul>
+      <h4>Why we built it this way</h4>
+      <div class="why-box">
+        Some users prefer a visual card layout over a chat. This gives the same sourcing power with a more structured, scannable output. The two sourcing interfaces (/source and /source-chat) serve the same function — use whichever suits you.
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="page-url">/upload</div>
+        <span class="audience-tag tag-internal">Internal only</span>
+      </div>
+      <div class="page-title">Resume Ingest</div>
+      <div class="page-desc">Upload a candidate's resume PDF and GoldenDB extracts all structured fields automatically using GPT-4o. Optionally provide their GitHub, Kaggle, Stack Overflow, or HuggingFace handles to trigger cross-platform enrichment immediately after ingest.</div>
+      <h4>What it can do</h4>
+      <ul>
+        <li>Accept any resume PDF, extract text with pdfplumber, send to GPT-4o for structured extraction</li>
+        <li>Extracts: name, title, company, skills with scores and years, systems built, compliance exposure, education, notice period, compensation expectations, and more</li>
+        <li>Auto-computes tier (T2–T6), composite score, retention estimate from extracted data</li>
+        <li>Optionally runs GitHub, Kaggle, Stack Overflow, and HuggingFace enrichment in the same step</li>
+        <li>Shows a result card preview before saving — skills bars, top systems, key stats</li>
+        <li>Links to the full profile page once saved</li>
+      </ul>
+      <h4>Why we built it this way</h4>
+      <div class="why-box">
+        Manually entering candidate data into a schema is error-prone and slow. GPT-4o can extract a well-structured JSON payload from any resume format in under 10 seconds. This takes a candidate from "PDF in email" to "searchable in the vector database" with no manual data entry. Combined with optional enrichment, a candidate can go from stage 1 to stage 3 in a single upload session.
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page-card">
+      <div class="page-card-header">
+        <div class="page-url">/profile/:candidate_id</div>
+        <span class="audience-tag tag-client">Client-facing</span>
+      </div>
+      <div class="page-title">Candidate Profile Page</div>
+      <div class="page-desc">A full candidate profile rendered from live data. Every link in the recruiter chat (e.g. /profile/GDB-1041) lands here. Two tabs: Client Profile (what the client sees) and Internal Signals (recruiter-only intel). Includes infographics, scoring breakdowns, and panel mechanics.</div>
+      <h4>What it contains</h4>
+      <ul>
+        <li><strong>Client Profile tab:</strong> Identity, availability/comp/mobility, technical depth, systems built, compliance exposure, education, behavioural calibration, motivation fit, and predictive scores</li>
+        <li><strong>Internal Signals tab:</strong> Pipeline ops, internal score estimates, risk/timing/conflict flags, psychology calibration, panel mechanics widget (two simulated panelist scores), and scoring infrastructure details</li>
+        <li><strong>Infographics:</strong> Readiness gauge, depth journey chart (v1→v2→v3 progression), skill bars for top 6 skills</li>
+        <li><strong>State chips:</strong> Every field is tagged — ✓ VER (verified by panel), ● UNVER (unverified), ⚙ SYS (system-computed), 🔒 LOCKED (panel-gated), — (null-valid field)</li>
+      </ul>
+      <h4>Why we built it this way</h4>
+      <div class="why-box">
+        A recruiter needs to walk into a client meeting able to speak confidently about every candidate. The profile page gives them everything in one place — not just skills and experience but predicted retention, compensation delta tolerance, management aspiration, red flags, and panel scores. The two-tab design separates what clients need from the internal intelligence that drives sourcing decisions.
+      </div>
+    </div>
+
+    <!-- AI TOOLS -->
+    <h2 id="tools">AI Tools (under the hood)</h2>
+    <p>The recruiter chat and sourcing copilot both use GPT-4o with function calling. Here are the tools each interface has access to:</p>
+
+    <h3>Recruiter Chat Tools</h3>
+    <table class="tool-table">
+      <tr><th>Tool</th><th>What it does</th><th>When GPT calls it</th></tr>
+      <tr><td>search_candidates</td><td>Hybrid semantic + filter search across panel_complete candidates in Qdrant. Takes a natural language query + structured filters (city, budget, notice, compliance, tier, band…)</td><td>Any find / shortlist / compare question</td></tr>
+      <tr><td>aggregate_candidates</td><td>Counts candidates grouped by a field. Returns distribution across all matching candidates.</td><td>Market questions — "where is the most talent?", "how many gold-band engineers in Pune?"</td></tr>
+      <tr><td>get_candidate_profile</td><td>Fetches the full payload for one candidate by GDB ID.</td><td>When the user asks about a specific person or GPT needs details to compare candidates</td></tr>
+    </table>
+
+    <h3>Sourcing Copilot Tools</h3>
+    <table class="tool-table">
+      <tr><th>Tool</th><th>What it does</th><th>When GPT calls it</th></tr>
+      <tr><td>source_candidates</td><td>Searches GitHub API, fetches up to 50 profiles in parallel, scores each, runs mock Apollo enrichment on top 15, caches results for saving.</td><td>Any search / find / source request</td></tr>
+      <tr><td>save_candidates</td><td>Takes a list of GitHub logins, builds full GoldenDB schema payloads from the cache, upserts into Qdrant as stage 1 candidates.</td><td>When user confirms they want to save ("save the top 3", "save all")</td></tr>
+    </table>
+
+    <!-- SCHEMA -->
+    <h2 id="schema">Candidate Schema</h2>
+    <p>Every candidate stored in Qdrant has the following fields. Fields grow richer as the candidate moves through pipeline stages.</p>
+
+    <div class="schema-grid">
+      <div class="schema-group">
+        <h4>Identity</h4>
+        <ul>
+          <li>candidate_id (GDB-XXXX)</li>
+          <li>full_name, current_title</li>
+          <li>current_company, company_tier</li>
+          <li>role_family, location_city</li>
+          <li>hometown_city, hometown_pull</li>
+        </ul>
+      </div>
+      <div class="schema-group">
+        <h4>Experience</h4>
+        <ul>
+          <li>yoe, yoe_domain</li>
+          <li>tier (T2–T6)</li>
+          <li>depth_v3 (0–10 panel score)</li>
+          <li>overall_band (gold/silver/bronze)</li>
+          <li>composite (0–100)</li>
+          <li>growth_velocity</li>
+        </ul>
+      </div>
+      <div class="schema-group">
+        <h4>Technical</h4>
+        <ul>
+          <li>skills (dict: score, years, recency)</li>
+          <li>systems_built (enum list)</li>
+          <li>compliance (enum list)</li>
+          <li>scale_tb, migration</li>
+          <li>genai_production</li>
+          <li>oss_maintainer</li>
+        </ul>
+      </div>
+      <div class="schema-group">
+        <h4>Education</h4>
+        <ul>
+          <li>degree, institution</li>
+          <li>institution_tier</li>
+          <li>grad_year</li>
+          <li>accolades, teaching</li>
+          <li>community_roles</li>
+        </ul>
+      </div>
+      <div class="schema-group">
+        <h4>Availability & Comp</h4>
+        <ul>
+          <li>notice_days, notice_negotiable</li>
+          <li>ctc_current, ctc_expected_min/max</li>
+          <li>search_status, work_mode</li>
+          <li>timezone_flex</li>
+          <li>intl_exposure</li>
+        </ul>
+      </div>
+      <div class="schema-group">
+        <h4>Behavioural</h4>
+        <ul>
+          <li>leadership_aspiration, ceiling</li>
+          <li>builder_archetype, chaos_tolerance</li>
+          <li>motivation_type, fit_context</li>
+          <li>ownership, exec_exposure</li>
+          <li>communication, resilience</li>
+        </ul>
+      </div>
+      <div class="schema-group">
+        <h4>Predictive</h4>
+        <ul>
+          <li>retention_6m, retention_12m</li>
+          <li>likelihood_to_move_6m</li>
+          <li>resume_panel_delta</li>
+          <li>renege_risk, red_flag</li>
+          <li>ideal_role</li>
+        </ul>
+      </div>
+      <div class="schema-group">
+        <h4>Pipeline</h4>
+        <ul>
+          <li>pipeline_stage (sourced → panel_complete)</li>
+          <li>signal_version (1–4)</li>
+          <li>source (github_apollo / resume / manual)</li>
+          <li>email, phone, linkedin_url</li>
+          <li>github_login, github_stars</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TECH STACK -->
+    <h2 id="stack">Tech Stack</h2>
+
+    <h3>Core</h3>
+    <div class="stack-row">
+      <div class="stack-chip">FastAPI <span>web server + API</span></div>
+      <div class="stack-chip">GPT-4o <span>chat + extraction</span></div>
+      <div class="stack-chip">Qdrant <span>vector database</span></div>
+      <div class="stack-chip">fastembed <span>BAAI/bge-small-en 384-dim</span></div>
+    </div>
+
+    <h3>Sourcing</h3>
+    <div class="stack-row">
+      <div class="stack-chip">GitHub API <span>candidate discovery</span></div>
+      <div class="stack-chip">Apollo.io <span>email + phone (mocked)</span></div>
+      <div class="stack-chip">Stack Overflow API <span>reputation + tags</span></div>
+      <div class="stack-chip">HuggingFace API <span>model downloads</span></div>
+      <div class="stack-chip">Kaggle <span>competition tier</span></div>
+    </div>
+
+    <h3>Infrastructure</h3>
+    <div class="stack-row">
+      <div class="stack-chip">Docker <span>containerised deployment</span></div>
+      <div class="stack-chip">Cloudflare Tunnel <span>public HTTPS URL</span></div>
+      <div class="stack-chip">Server-Sent Events <span>real-time streaming</span></div>
+      <div class="stack-chip">pdfplumber <span>resume text extraction</span></div>
+    </div>
+
+    <h3>Why vector search instead of SQL</h3>
+    <p>A recruiter asking "deliberate IC who refused management and built data lakes at scale" cannot be answered with SQL. It's a semantic query — the meaning matters, not keyword matching. Qdrant stores a 384-dimensional embedding of each candidate's full profile bio, so semantic queries find the right people even when the exact words don't match. Hard constraints (city, notice, budget) are applied as filters on top of the vector search, combining meaning with precision.</p>
+
+  </div>
+</div>
+
+<footer>GoldenDB — internal documentation · All candidate data is synthetic for demo purposes</footer>
+
+</body>
+</html>
