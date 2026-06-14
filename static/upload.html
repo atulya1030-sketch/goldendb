@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GoldenDB — Add Candidate</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--text:#111;--text2:#888;--border:#E5E5E5;--bg:#fff;--accent:#353395;--green:#16A34A;--red:#DC2626}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column}
+
+header{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0}
+.logo{font-size:14px;font-weight:700;color:var(--text)}
+.logo span{color:var(--text2);font-weight:400;margin-left:6px;font-size:12px}
+.nav-links{display:flex;gap:16px;font-size:13px}
+.nav-links a{color:var(--text2);text-decoration:none}.nav-links a:hover{color:var(--text)}
+
+.shell{flex:1;max-width:680px;margin:0 auto;width:100%;padding:40px 20px}
+h1{font-size:20px;font-weight:700;margin-bottom:6px}
+.sub{font-size:13px;color:var(--text2);margin-bottom:32px}
+
+/* drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:14px;padding:48px 24px;
+  text-align:center;cursor:pointer;transition:all .15s;position:relative;background:#FAFAFA}
+.drop-zone.over{border-color:var(--accent);background:#F0F0FB}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop-icon{font-size:32px;margin-bottom:10px}
+.drop-label{font-size:14px;font-weight:500;margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--text2)}
+
+/* enrichment fields */
+.enrich-section{margin-top:28px}
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:12px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.fields{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11.5px;color:var(--text2);font-weight:500}
+.field input{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.field input:focus{border-color:#A0A0A0}
+.field input::placeholder{color:#C0C0C0}
+
+/* submit */
+.submit-row{margin-top:24px;display:flex;gap:10px;align-items:center}
+.btn{padding:10px 22px;border-radius:9px;border:none;font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.85}
+.btn-primary:disabled{opacity:.35;cursor:default}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{border-color:#A0A0A0;color:var(--text)}
+
+/* progress */
+#progress{display:none;margin-top:28px}
+.step-list{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:10px;font-size:13px}
+.step-dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px}
+.step.active .step-dot{border-color:var(--accent);animation:pulse .9s infinite}
+.step.done .step-dot{border-color:var(--green);background:var(--green);color:#fff}
+.step.err .step-dot{border-color:var(--red);background:var(--red);color:#fff}
+.step-label{color:var(--text2)}
+.step.active .step-label{color:var(--text);font-weight:500}
+.step.done .step-label{color:var(--text)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* result card */
+#result{display:none;margin-top:28px;border:1px solid var(--border);border-radius:12px;padding:20px;background:#FAFAFA}
+.result-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
+.result-name{font-size:17px;font-weight:700}
+.result-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.result-id{font-size:11px;font-weight:700;background:#EEF2FF;color:#4338CA;border-radius:999px;padding:2px 10px}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media(max-width:500px){.fields-grid{grid-template-columns:1fr}}
+.result-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #F0F0F0;font-size:12px}
+.result-row:last-child{border:none}
+.rk{color:var(--text2)}.rv{font-weight:600;text-align:right}
+.badge{border-radius:999px;padding:2px 9px;font-size:11px;font-weight:700}
+.badge-gold{background:#FEF3C7;color:#92400E}
+.badge-silver{background:#F1F5F9;color:#475569}
+.badge-bronze{background:#FEF3E2;color:#92400E}
+.result-actions{margin-top:16px;display:flex;gap:8px}
+.enrich-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.enrich-badge{font-size:11.5px;border:1px solid var(--border);border-radius:6px;padding:4px 10px;
+  color:var(--text2);cursor:pointer;transition:all .15s}
+.enrich-badge:hover{border-color:#A0A0A0;color:var(--text)}
+.enrich-badge.done{border-color:var(--green);color:var(--green)}
+.enrich-badge.loading{opacity:.5;pointer-events:none}
+
+#error-msg{display:none;margin-top:16px;padding:12px 14px;border-radius:8px;background:#FEE2E2;color:var(--red);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">GoldenDB <span>add candidate</span></div>
+  <div class="nav-links">
+    <a href="/">Chat</a>
+  </div>
+</header>
+
+<div class="shell">
+  <h1>Add a candidate</h1>
+  <p class="sub">Upload a resume PDF — GPT-4o extracts all fields automatically, then optionally enrich with GitHub, Kaggle, Stack Overflow, or HuggingFace.</p>
+
+  <!-- drop zone -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" accept=".pdf" id="fileInput" onchange="onFile(this.files[0])">
+    <div class="drop-icon">📄</div>
+    <div class="drop-label" id="dropLabel">Drop a PDF resume here</div>
+    <div class="drop-sub">or click to browse</div>
+  </div>
+
+  <!-- optional enrichment usernames -->
+  <div class="enrich-section">
+    <div class="section-label">Optional — auto-enrich after ingest</div>
+    <div class="fields">
+      <div class="field">
+        <label>GitHub username</label>
+        <input id="gh" placeholder="e.g. torvalds">
+      </div>
+      <div class="field">
+        <label>Kaggle username</label>
+        <input id="kg" placeholder="e.g. ananyaiyer">
+      </div>
+      <div class="field">
+        <label>Stack Overflow user ID</label>
+        <input id="so" placeholder="e.g. 1234567">
+      </div>
+      <div class="field">
+        <label>HuggingFace username</label>
+        <input id="hf" placeholder="e.g. google-bert">
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-row">
+    <button class="btn btn-primary" id="submitBtn" onclick="submit()" disabled>Add to GoldenDB</button>
+    <button class="btn btn-ghost" onclick="reset()">Clear</button>
+  </div>
+
+  <!-- progress -->
+  <div id="progress">
+    <div class="step-list">
+      <div class="step" id="s-extract"><div class="step-dot"></div><span class="step-label">Extracting text from PDF</span></div>
+      <div class="step" id="s-parse"><div class="step-dot"></div><span class="step-label">GPT-4o parsing resume fields</span></div>
+      <div class="step" id="s-embed"><div class="step-dot"></div><span class="step-label">Generating embedding & storing in Qdrant</span></div>
+      <div class="step" id="s-enrich"><div class="step-dot" id="s-enrich-dot"></div><span class="step-label" id="s-enrich-label">Enriching from external sources</span></div>
+    </div>
+  </div>
+
+  <div id="error-msg"></div>
+
+  <!-- result -->
+  <div id="result"></div>
+</div>
+
+<script>
+let selectedFile = null;
+let ingestedId   = null;
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',  e=>{ e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', ()=> dz.classList.remove('over'));
+dz.addEventListener('drop', e=>{
+  e.preventDefault(); dz.classList.remove('over');
+  if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]);
+});
+
+function onFile(f) {
+  if (!f || !f.name.endsWith('.pdf')) return;
+  selectedFile = f;
+  document.getElementById('dropLabel').textContent = f.name;
+  document.getElementById('submitBtn').disabled = false;
+}
+
+function step(id, state) {  // state: 'active' | 'done' | 'err'
+  const el = document.getElementById(id);
+  el.className = `step ${state}`;
+  if (state === 'done') el.querySelector('.step-dot').textContent = '✓';
+  if (state === 'err')  el.querySelector('.step-dot').textContent = '✕';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function reset() {
+  selectedFile = null; ingestedId = null;
+  document.getElementById('dropLabel').textContent = 'Drop a PDF resume here';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('progress').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  ['s-extract','s-parse','s-embed','s-enrich'].forEach(id=>{
+    const el=document.getElementById(id); el.className='step';
+    el.querySelector('.step-dot').textContent='';
+  });
+  document.getElementById('s-enrich-label').textContent = 'Enriching from external sources';
+}
+
+async function submit() {
+  if (!selectedFile) return;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('error-msg').style.display = 'none';
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('progress').style.display = 'block';
+
+  step('s-extract', 'active');
+  const form = new FormData();
+  form.append('file', selectedFile);
+
+  let data;
+  try {
+    step('s-extract', 'done');
+    step('s-parse', 'active');
+    const res = await fetch('/api/ingest/resume', { method: 'POST', body: form });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || 'Server error'); }
+    data = await res.json();
+    step('s-parse', 'done');
+    step('s-embed', 'done');
+  } catch(e) {
+    step('s-parse', 'err');
+    showErr(`Ingest failed: ${e.message}`);
+    document.getElementById('submitBtn').disabled = false;
+    return;
+  }
+
+  ingestedId = data.candidate_id;
+
+  // run enrichments if usernames provided
+  const enrichments = [
+    { id: 'gh', url: `/api/enrich/github/${ingestedId}`, param: 'username', label: 'GitHub' },
+    { id: 'kg', url: `/api/enrich/kaggle/${ingestedId}`, param: 'username', label: 'Kaggle' },
+    { id: 'so', url: `/api/enrich/stackoverflow/${ingestedId}`, param: 'user_id', label: 'Stack Overflow' },
+    { id: 'hf', url: `/api/enrich/huggingface/${ingestedId}`, param: 'username', label: 'HuggingFace' },
+  ];
+  const active = enrichments.filter(e => document.getElementById(e.id).value.trim());
+
+  if (active.length > 0) {
+    step('s-enrich', 'active');
+    document.getElementById('s-enrich-label').textContent = `Enriching from ${active.map(e=>e.label).join(', ')}…`;
+    for (const e of active) {
+      const val = document.getElementById(e.id).value.trim();
+      try {
+        await fetch(`${e.url}?${e.param}=${encodeURIComponent(val)}`);
+      } catch { /* non-fatal */ }
+    }
+    step('s-enrich', 'done');
+  } else {
+    document.getElementById('s-enrich-dot').textContent = '—';
+    document.getElementById('s-enrich-label').style.color = '#C0C0C0';
+  }
+
+  renderResult(data.candidate);
+}
+
+function badge(band) {
+  return `<span class="badge badge-${band}">${band.toUpperCase()}</span>`;
+}
+function pill(label) {
+  return `<span style="display:inline-block;background:#F4F4F5;border-radius:999px;padding:2px 9px;font-size:11px;margin:2px 2px 2px 0">${label}</span>`;
+}
+
+function renderResult(c) {
+  const skills = Object.entries(c.skills || {}).sort((a,b)=>b[1].score-a[1].score).slice(0,4);
+  const systems = (c.systems_built || []).map(s=>pill(s.replace(/_/g,' '))).join('');
+  const comp = (c.compliance || []).map(s=>pill(s.replace(/_/g,' ').toUpperCase())).join('');
+
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').innerHTML = `
+    <div class="result-header">
+      <div>
+        <div class="result-name">${c.full_name}</div>
+        <div class="result-meta">${c.current_title} @ ${c.current_company} · ${c.location_city}</div>
+      </div>
+      <span class="result-id">${c.candidate_id}</span>
+    </div>
+
+    <div class="fields-grid">
+      <div>
+        <div class="result-row"><span class="rk">Tier</span><span class="rv">${c.tier}</span></div>
+        <div class="result-row"><span class="rk">Band</span><span class="rv">${badge(c.overall_band)}</span></div>
+        <div class="result-row"><span class="rk">Composite</span><span class="rv">${c.composite} / 100 <span style="color:#888;font-size:11px">(est · stage 2)</span></span></div>
+        <div class="result-row"><span class="rk">YOE</span><span class="rv">${c.yoe}y total · ${c.yoe_domain}y domain</span></div>
+        <div class="result-row"><span class="rk">Role family</span><span class="rv">${(c.role_family||'').replace(/_/g,' ')}</span></div>
+        <div class="result-row"><span class="rk">Notice</span><span class="rv">${c.notice_days}d</span></div>
+        <div class="result-row"><span class="rk">Comp expected</span><span class="rv">₹${c.ctc_expected_min}–${c.ctc_expected_max}L</span></div>
+      </div>
+      <div>
+        <div class="result-row"><span class="rk">Depth (est)</span><span class="rv">${c.depth_v3}/10</span></div>
+        <div class="result-row"><span class="rk">Retention 6m</span><span class="rv">${Math.round(c.retention_6m*100)}% (est)</span></div>
+        <div class="result-row"><span class="rk">Education</span><span class="rv">${c.degree} · ${c.institution}</span></div>
+        <div class="result-row"><span class="rk">Location</span><span class="rv">${c.location_city}</span></div>
+        <div class="result-row"><span class="rk">Intl exposure</span><span class="rv">${(c.intl_exposure||'none').replace(/_/g,' ')}</span></div>
+        <div class="result-row"><span class="rk">GenAI prod</span><span class="rv">${c.genai_production ? '✓ yes' : '—'}</span></div>
+        <div class="result-row"><span class="rk">OSS</span><span class="rv">${c.oss_maintainer ? '✓ maintainer' : '—'}</span></div>
+      </div>
+    </div>
+
+    ${skills.length ? `<div style="margin-top:14px">
+      <div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Top skills</div>
+      ${skills.map(([n,v])=>`<div style="margin-bottom:6px;font-size:12px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px"><span>${n}</span><span style="color:#888">${v.score}/10</span></div>
+        <div style="height:4px;background:#F0F0F0;border-radius:2px"><div style="height:100%;width:${v.score*10}%;background:#353395;border-radius:2px"></div></div>
+      </div>`).join('')}
+    </div>` : ''}
+
+    ${systems ? `<div style="margin-top:12px"><div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Systems built</div>${systems}</div>` : ''}
+    ${comp    ? `<div style="margin-top:10px"><div style="font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Compliance</div>${comp}</div>` : ''}
+
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #F0F0F0;font-size:12px;color:#888;font-style:italic">
+      Stage 2 — resume parse only. Scores are estimates; panel required to unlock full verification.
+    </div>
+
+    <div class="result-actions">
+      <a href="/profile/${c.candidate_id}" style="padding:9px 18px;background:#353395;color:#fff;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none">View full profile →</a>
+      <a href="/" style="padding:9px 18px;border:1px solid #E5E5E5;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;color:#555">Search in chat →</a>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>

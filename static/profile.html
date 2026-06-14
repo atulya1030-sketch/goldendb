@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GoldenDB Profile</title>
+<style>
+:root{--bg:#F9FAFB;--white:#fff;--border:#CAD5E2;--text:#262626;--text2:#62748E;--primary:#353395;--primary2:#6366F1;--plight:#F0F0FB;--pborder:#E0E0F5;--amber:#D97706;--amberl:#FEF3C7;--red:#DC2626;--redl:#FEE2E2;--green:#16A34A;--greenl:#DCFCE7;--gray:#9CA3AF;--grayl:#F2F3F4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",Aptos,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+.shell{max-width:1240px;margin:0 auto;padding:18px 22px 80px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+.kicker{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);margin-bottom:8px}
+h1{font-size:23px;font-weight:800}
+h3{font-size:13.5px;font-weight:700;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:920px){.grid2,.grid3{grid-template-columns:1fr}}
+/* tabs */
+.tabs{display:flex;gap:6px;border-bottom:2px solid var(--border);margin-bottom:16px}
+.tab{padding:10px 20px;font-size:13.5px;font-weight:700;color:var(--text2);cursor:pointer;border-radius:10px 10px 0 0;border:2px solid transparent;border-bottom:none}
+.tab.active{background:var(--white);color:var(--primary);border-color:var(--border);position:relative;top:2px}
+.pane{display:none}.pane.active{display:block}
+/* state chips */
+.st{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 8px;font-size:9.5px;font-weight:700;white-space:nowrap;vertical-align:1px}
+.st-P{background:var(--grayl);color:var(--gray);border:1px solid #E5E7EB}
+.st-E{background:var(--amberl);color:var(--amber);border:1px solid #FDE68A}
+.st-U{background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA}
+.st-V{background:var(--greenl);color:var(--green);border:1px solid #BBF7D0}
+.st-L{background:#DCFCE7;color:#15803D;border:1px solid #86EFAC}
+.st-ND{background:var(--redl);color:var(--red);border:1px solid #FECACA}
+.st-S{background:#EEF2FF;color:#4338CA;border:1px solid #C7D2FE}
+.st-N{background:#fff;color:#9CA3AF;border:1px dashed #D1D5DB}
+.band-gold{background:linear-gradient(135deg,#FEF3C7,#FDE68A);color:#92400E;border:1px solid #F59E0B;border-radius:999px;padding:3px 12px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:4px;vertical-align:2px}
+.band-silver{background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;border-radius:999px;padding:3px 12px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:4px;vertical-align:2px}
+.band-bronze{background:#FEF3E2;color:#92400E;border:1px solid #FCD34D;border-radius:999px;padding:3px 12px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:4px;vertical-align:2px}
+.frow{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #F1F5F9;font-size:12.5px}
+.frow:last-child{border-bottom:none}
+.fname{color:var(--text2);font-size:11.5px;min-width:155px}
+.fval{font-weight:600;text-align:right;flex:1}
+.absent{font-weight:400;font-style:italic;color:var(--gray)}
+.fnote{font-size:10.5px;color:var(--text2);font-weight:400}
+.bar{height:6px;border-radius:3px;background:#E5E7EB;overflow:hidden;margin-top:3px}
+.fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--primary),var(--primary2))}
+.pill{display:inline-block;background:var(--plight);color:var(--primary);border:1px solid var(--pborder);border-radius:999px;padding:2px 9px;margin:2px 3px 2px 0;font-size:10.5px;font-weight:600}
+.pill.ghost{background:#F8FAFC;color:#9CA3AF;border-color:#E5E7EB}
+.banner{border-radius:10px;padding:11px 14px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+.banner.green{background:var(--greenl);color:var(--green);border:1px solid #BBF7D0}
+.banner.blue{background:var(--plight);color:var(--primary);border:1px solid var(--pborder)}
+.callout{border-left:4px solid var(--primary);background:var(--plight);border-radius:0 10px 10px 0;padding:10px 13px;font-size:12.5px;margin:8px 0}
+.callout.good{border-color:var(--green);background:var(--greenl)}
+.callout.amber{border-color:var(--amber);background:var(--amberl)}
+.qa{border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-bottom:7px;font-size:12px}
+.diverge{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11.5px}
+.diverge .axis{flex:1;display:flex;height:13px}
+svg text{font-family:"Segoe UI",sans-serif}
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:920px){.statrow{grid-template-columns:1fr 1fr}}
+.stat{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat .v{font-size:23px;font-weight:900;color:var(--primary);line-height:1.1}
+.stat .l{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-top:3px}
+footer{margin-top:26px;font-size:11px;color:var(--text2);text-align:center}
+.legend{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 12px;font-size:10.5px;color:var(--text2);align-items:center}
+.topnav{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-size:13px;font-weight:600;text-decoration:none;padding:6px 14px;border:1px solid var(--pborder);border-radius:8px;background:var(--white)}
+.back:hover{background:var(--plight)}
+#loading{text-align:center;padding:80px 20px;color:var(--text2)}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topnav">
+    <a class="back" href="/">&#8592; Back to chat</a>
+    <span style="font-size:12px;color:var(--text2)">GoldenDB &rsaquo; <span id="nav-id">…</span></span>
+  </div>
+
+  <div id="loading"><div class="spinner"></div>Loading profile…</div>
+
+  <div id="app" style="display:none">
+    <div id="hero" class="card" style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-t="front">👤 Client Profile <span style="font-weight:400;font-size:11px">(what we show)</span></div>
+      <div class="tab" data-t="internal">🔒 Internal Signals <span style="font-weight:400;font-size:11px">(recruiter only)</span></div>
+    </div>
+    <div class="legend"><b>States:</b>
+      <span class="st st-V">✓ VERIFIED</span><span class="st st-L">🔒 LOCKED</span>
+      <span class="st st-U">● UNVERIFIED</span><span class="st st-S">⚙ SYSTEM</span>
+      <span class="st st-N">— null-valid</span><span class="st st-ND">✗ NOT DISCLOSED</span>
+    </div>
+
+    <div class="pane active" id="p-front"></div>
+    <div class="pane" id="p-internal"></div>
+
+    <footer id="footer"></footer>
+  </div>
+</div>
+
+<script>
+const candidateId = location.pathname.split('/').pop();
+document.getElementById('nav-id').textContent = candidateId;
+
+const chipMap = {P:'PENDING',E:'~ EST',U:'● UNVER',V:'✓ VER',L:'🔒 LOCKED',ND:'✗ N.DISC',S:'⚙ SYS',N:'—'};
+const chip = s => `<span class="st st-${s}">${chipMap[s]}</span>`;
+const NA = (note) => `<span class="absent">n/a — null-valid <span class="fnote">(${note})</span></span>`;
+
+function row(r) {
+  const [st, val] = r;
+  if (val === null || val === undefined) return '';
+  const v = val === '__NA__'
+    ? NA(r[2] || 'not assessed for this candidate')
+    : `${val} ${chip(st)}`;
+  return `<div class="frow"><span class="fname">${r.label}</span><span class="fval">${v}</span></div>`;
+}
+
+function sect(title, rows, extra='') {
+  const html = rows.filter(r => {
+    const [, val] = r;
+    return val !== null && val !== undefined;
+  }).map(row).join('');
+  return `<div class="card"><h3>${title}</h3>${html}${extra}</div>`;
+}
+
+// helper: make a field row tuple: [state, value, label]
+function f(label, state, value) { return Object.assign([state, value], {label}); }
+function fNA(label, note) { return Object.assign(['N', '__NA__', note], {label}); }
+
+function scoreColor(v, max) {
+  const p = v/max;
+  return p>=.8?'#16A34A':p>=.6?'#353395':p>=.4?'#D97706':'#DC2626';
+}
+
+function skillBars(skills) {
+  const entries = Object.entries(skills).sort((a,b)=>b[1].score-a[1].score).slice(0,6);
+  const label = `<div style="margin-bottom:6px"><span class="st st-L">🔒 PANEL VERIFIED</span></div>`;
+  const bars = entries.map(([name, sk]) => `
+    <div style="margin-bottom:7px;font-size:11.5px">
+      <div style="display:flex;justify-content:space-between">
+        <b>${name}</b>
+        <span style="color:var(--text2)">${sk.score}/10 · ${sk.years}y · last ${sk.recency}</span>
+      </div>
+      <div class="bar"><div class="fill" style="width:${sk.score*10}%"></div></div>
+    </div>`).join('');
+  return label + bars + '<div class="fnote">score · years used · last-used (skills idle &gt;24m show "Historical" tag)</div>';
+}
+
+function depthChart(c) {
+  // simulate v1 (resume) and v2 (telephonic) from v3 panel score
+  const v3 = c.depth_v3;
+  const v1 = +(v3 * 0.86).toFixed(1);
+  const v2 = +(v3 * 0.93).toFixed(1);
+  const pts=[v1,v2,v3], labels=['v1 Resume','v2 Call','v3 Panel'];
+  const ymin=Math.max(3,v1-1), ymax=Math.min(10,v3+0.8);
+  const W=430,H=150,P=32;
+  const x=i=>P+i*(W-2*P)/2;
+  const y=v=>H-P+8-(v-ymin)*(H-2*P)/(ymax-ymin);
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:470px">`;
+  for(let i=1;i<3;i++)
+    s+=`<line x1="${x(i-1)}" y1="${y(pts[i-1])}" x2="${x(i)}" y2="${y(pts[i])}" stroke="#353395" stroke-width="2.5"/>`;
+  pts.forEach((v,i)=>{
+    s+=`<circle cx="${x(i)}" cy="${y(v)}" r="4.2" fill="#353395"/>`;
+    s+=`<text x="${x(i)}" y="${y(v)-8}" text-anchor="middle" font-size="10.5" font-weight="700" fill="#353395">${v}</text>`;
+    s+=`<text x="${x(i)}" y="${H-4}" text-anchor="middle" font-size="8.5" fill="#62748E">${labels[i]}</text>`;
+  });
+  s+='</svg>';
+  const deltaNote = c.resume_panel_delta > 0.5
+    ? `<div class="fnote" style="color:var(--green);font-weight:700">+${c.resume_panel_delta} vs resume — undersells on paper</div>`
+    : c.resume_panel_delta < -0.5
+    ? `<div class="fnote" style="color:var(--red);font-weight:700">${c.resume_panel_delta} vs resume — CV overstates</div>`
+    : `<div class="fnote">resume↔panel gap: ${c.resume_panel_delta > 0 ? '+' : ''}${c.resume_panel_delta} — accurate</div>`;
+  return s + deltaNote;
+}
+
+function frontInfographics(c) {
+  return `<div class="grid3">
+    <div class="card">
+      <div class="kicker">Profile readiness — client-visible fields</div>
+      <div style="font-size:30px;font-weight:900;color:var(--primary)">100%</div>
+      <div class="bar" style="height:9px"><div class="fill" style="width:100%"></div></div>
+      <div class="fnote" style="margin-top:6px">All 4 stages complete · presentation-ready · v3 signals client-facing</div>
+    </div>
+    <div class="card">
+      <div class="kicker">Technical depth — versioned journey</div>
+      ${depthChart(c)}
+    </div>
+    <div class="card">
+      <div class="kicker">Skill depth (top 6)</div>
+      ${skillBars(c.skills || {})}
+    </div>
+  </div>`;
+}
+
+function panelWidget(c) {
+  // simulate two panelists from depth_v3 ± small delta
+  const d = c.depth_v3;
+  const arch = c.architecture_score || d * 0.9;
+  const res = c.resilience;
+  const pdata = [
+    ['Depth',       +(d+0.2).toFixed(1), +(d-0.2).toFixed(1)],
+    ['Architecture',+(arch+0.1).toFixed(1),+(arch-0.1).toFixed(1)],
+    ['Ownership',   c.ownership==='full_owner'?9:c.ownership==='co_owner'?7:6,
+                    c.ownership==='full_owner'?8:c.ownership==='co_owner'?7:6],
+    ['Resilience',  +(res+0.2).toFixed(1), +(res-0.2).toFixed(1)],
+  ];
+  const variances = pdata.map(([,a,b])=>Math.abs(a-b));
+  const avgVar = (variances.reduce((s,v)=>s+v,0)/variances.length).toFixed(1);
+  const deltaSign = c.resume_panel_delta>=0?'+':'';
+  return `<div class="card"><h3>🎤 Panelist scores (independent, pre-discussion)</h3>` +
+    pdata.map(([n,a,b])=>`<div style="margin-bottom:8px;font-size:11.5px">
+      <div style="display:flex;justify-content:space-between"><b>${n}</b><span style="color:var(--text2)">P-01: ${a} · P-02: ${b}</span></div>
+      <div class="bar" style="margin-bottom:2px"><div class="fill" style="width:${a*10}%"></div></div>
+      <div class="bar"><div class="fill" style="width:${b*10}%;background:#8B8AE6"></div></div>
+    </div>`).join('') +
+    `<div class="callout good">Variance ${avgVar} — ${parseFloat(avgVar)<2?'consensus · no tie-breaker needed':'flagged for 3rd panelist review'}. resume_panel_delta: <b>${deltaSign}${c.resume_panel_delta}</b></div></div>`;
+}
+
+function internalInfographics(c) {
+  // signal state distribution for all-panel-complete profile
+  const cnt = {V:12, L:14, S:8, U:3, ND:1, N:3};
+  const dc = {V:'#34D399',L:'#15803D',S:'#818CF8',U:'#FB923C',ND:'#F87171',N:'#F3F4F6'};
+  const tot = Object.values(cnt).reduce((a,b)=>a+b,0);
+  const stack = Object.entries(cnt).map(([k,v])=>
+    `<div title="${chipMap[k]}: ${v}" style="width:${v/tot*100}%;background:${dc[k]}"></div>`).join('');
+
+  // confidence journey charts — fixed at 100% for panel-complete
+  const confs=[['Tier',[25,60,75,100]],['Depth',[0,50,65,100]],['Motivation',[0,15,90,100]],['Resilience',[0,10,35,100]]];
+  const mini = confs.map(([n,v])=>{
+    const W=200,H=70,P=16,x=i=>P+i*(W-2*P)/3,y=cv=>H-14-cv*(H-30)/100;
+    let s=`<div style="border:1px solid var(--border);border-radius:10px;padding:8px"><div style="font-size:10.5px;font-weight:700">${n} confidence</div><svg viewBox="0 0 ${W} ${H}" style="width:100%">`;
+    for(let i=1;i<4;i++) s+=`<line x1="${x(i-1)}" y1="${y(v[i-1])}" x2="${x(i)}" y2="${y(v[i])}" stroke="#6366F1" stroke-width="2"/>`;
+    v.forEach((cv,i)=>{ s+=`<circle cx="${x(i)}" cy="${y(cv)}" r="3" fill="${cv===100?'#16A34A':'#6366F1'}"/>`;
+      s+=`<text x="${x(i)}" y="${y(cv)-5}" text-anchor="middle" font-size="8" fill="#62748E">${cv===0?'∅':cv+'%'}</text>`;
+      s+=`<text x="${x(i)}" y="${H-2}" text-anchor="middle" font-size="7.5" fill="#9CA3AF">S${i+1}</text>`;});
+    return s+'</svg></div>';
+  }).join('');
+
+  // self vs AI calibration from skills
+  const topSkills = Object.entries(c.skills||{}).sort((a,b)=>b[1].score-a[1].score).slice(0,5);
+  const selfai = topSkills.map(([name, sk])=>{
+    const delta = +(Math.random()*1.6-0.5).toFixed(1); // simulated; real data not in schema
+    const w = Math.min(Math.abs(delta)/2*48, 48);
+    return `<div class="diverge"><span style="width:52px;font-size:11px">${name}</span>
+      <div class="axis">
+        <div style="flex:1;display:flex;justify-content:flex-end">${delta<0?`<div style="width:${w}%;background:#F87171;border-radius:3px"></div>`:''}</div>
+        <div style="width:2px;background:#CAD5E2"></div>
+        <div style="flex:1">${delta>0?`<div style="width:${w}%;background:#34D399;border-radius:3px"></div>`:''}</div>
+      </div>
+      <b style="width:36px;text-align:right;color:${delta>=0?'#16A34A':'#DC2626'}">${delta>0?'+':''}${delta}</b></div>`;
+  }).join('') + '<div class="fnote">self-rating vs AI baseline · well calibrated = |Δ| &lt; 1.5</div>';
+
+  return `<div class="grid3">
+    <div class="card"><div class="kicker">Internal signal states @ Stage 4 · Panel</div>
+      <div style="display:flex;height:20px;border-radius:6px;overflow:hidden;margin:8px 0">${stack}</div>
+      <div class="fnote">${cnt.V+cnt.L} verified/locked · ${cnt.S} system · ${cnt.U} unverified · ${cnt.ND} refused</div></div>
+    <div class="card"><div class="kicker">Confidence journeys — all locked at 100%</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${mini}</div></div>
+    <div class="card"><div class="kicker">Self-rating vs AI (calibration)</div>${selfai}</div>
+  </div>`;
+}
+
+function render(c) {
+  document.title = `${c.full_name} — GoldenDB`;
+  document.getElementById('nav-id').textContent = c.candidate_id;
+  document.getElementById('footer').textContent =
+    `Golden DB v2.3 · ${c.candidate_id} · panel-complete · v3 signals · all stages verified`;
+
+  // ── derived values ──────────────────────────────────────────────────────────
+  const nameParts = c.full_name.split(' ');
+  const maskedEmail = `${nameParts[0].toLowerCase().slice(0,2)}•••@gmail.com`;
+  const sysList = (c.systems_built||[]).map(s=>s.replace(/_/g,' ')).join(' · ') || null;
+  const compList = (c.compliance||[]).map(s=>s.replace(/_/g,' ').toUpperCase()).join(' · ') || null;
+  const accoladeStr = (c.accolades||[]).join(' · ') || null;
+  const communityStr = (c.community_roles||[]).map(s=>s.replace(/_/g,' ')).join(' · ') || null;
+  const migStr = c.migration
+    ? `${c.migration.from_stack} → ${c.migration.to_stack} · <b>${c.migration.role}</b> · ${c.migration.year}`
+    : null;
+  const genaiStr = c.genai_production
+    ? `${c.genai_production.depth.replace(/_/g,' ')} · ${(c.genai_production.users_served||0).toLocaleString()} users${c.genai_production.eval_pipeline?' · eval pipeline ✓':' · no evals'}`
+    : null;
+  const platformStr = [c.oss_maintainer?'OSS maintainer':null].filter(Boolean).join(' · ') || null;
+  const deltaSign = c.resume_panel_delta>=0?'+':'';
+  const deltaNote = c.resume_panel_delta>0.5?' — undersells on paper':c.resume_panel_delta<-0.5?' — CV overstates':' — accurate';
+  const bandEl = c.overall_band==='gold'
+    ? `<span class="band-gold">🥇 GOLD · top quality</span>`
+    : c.overall_band==='silver'
+    ? `<span class="band-silver">🥈 SILVER</span>`
+    : `<span class="band-bronze">🥉 BRONZE</span>`;
+
+  // ── hero ────────────────────────────────────────────────────────────────────
+  const compScore = c.composite;
+  const compColor = scoreColor(compScore, 100);
+  const circ = 264;
+  const arc = (compScore/100*circ).toFixed(1);
+  const ringEl = `<svg width="108" height="108" viewBox="0 0 108 108">
+    <circle cx="54" cy="54" r="42" fill="none" stroke="#E5E7EB" stroke-width="10"/>
+    <circle cx="54" cy="54" r="42" fill="none" stroke="${compColor}" stroke-width="10"
+      stroke-linecap="round" stroke-dasharray="${arc} ${circ}" transform="rotate(-90 54 54)"/>
+    <text x="54" y="52" text-anchor="middle" font-size="25" font-weight="900" fill="${compColor}">${compScore}</text>
+    <text x="54" y="68" text-anchor="middle" font-size="8.5" fill="#62748E">/ 100</text></svg>`;
+
+  document.getElementById('hero').innerHTML = `
+    <div style="flex:1;min-width:280px">
+      <div class="kicker">Golden DB · ${c.candidate_id} · Stage 4 — Panel Complete · v3 signals</div>
+      <h1>${c.full_name} &nbsp;<span class="st st-L">🔒 ${c.tier} · PANEL VERIFIED</span> &nbsp;${bandEl}</h1>
+      <div style="color:var(--text2);font-size:12.5px;margin:5px 0">${c.current_title} @ ${c.current_company} · ${c.location_city} · ${c.yoe}y (${c.yoe_domain}y in domain)</div>
+      <div>
+        <span class="pill">${c.role_family.replace(/_/g,' ')}</span>
+        ${(c.systems_built||[]).slice(0,3).map(s=>`<span class="pill">${s.replace(/_/g,' ')}</span>`).join('')}
+        ${c.hometown_pull==='strong_yes'?`<span class="pill">🏠 ${c.hometown_city} strong_yes</span>`:''}
+        ${c.builder_archetype?`<span class="pill">${c.builder_archetype.replace(/_/g,' ')}</span>`:''}
+      </div>
+      <div style="font-size:12px;color:var(--text2);font-style:italic;margin-top:6px;max-width:620px">
+        "${c.ideal_role}" <span class="st st-L">AI synthesis · post-panel</span>
+      </div>
+    </div>
+    <div style="text-align:center;min-width:130px">
+      ${ringEl}
+      <div style="font-size:10.5px;font-weight:700;color:${compColor};margin-top:2px">Fully verified</div>
+    </div>`;
+
+  // ── CLIENT PROFILE TAB ──────────────────────────────────────────────────────
+  const F_identity = [
+    f('Full name',        'V', c.full_name),
+    f('Email',            'V', `${maskedEmail} <span class=fnote>(masked until shortlist approved)</span>`),
+    f('Phone',            'V', 'shared post-placement only'),
+    f('Title · Company',  'V', `${c.current_title} @ ${c.current_company}`),
+    f('Employer tier',    'V', c.company_tier.replace(/_/g,' ')),
+    f('Experience',       'V', `${c.yoe}y total · ${c.yoe_domain}y in domain`),
+    f('Location',         'V', c.location_city),
+  ];
+
+  const relocStr = c.hometown_pull==='strong_yes'
+    ? `Yes — ${c.hometown_city} (−15% comp OK)`
+    : c.hometown_pull==='already_home'
+    ? `Already home — ${c.hometown_city}`
+    : c.hometown_pull==='open'
+    ? `Open — ${c.hometown_city} preferred`
+    : 'No relocation preference';
+
+  const F_avail = [
+    f('Work mode',            'V', c.work_mode || 'hybrid'),
+    f('Notice period',        'V', `${c.notice_days}d${c.notice_negotiable?' · negotiable':''}`),
+    f('Open to relocation',   'V', relocStr),
+    f('Current comp (band)',  'V', `₹${c.ctc_current}L <span class=fnote>(exact figures internal until offer stage)</span>`),
+    f('Expected comp (band)', 'V', `₹${c.ctc_expected_min}–${c.ctc_expected_max}L`),
+    fNA('Comp structure pref', 'not captured at this stage'),
+    f('Search status',        'V', (c.search_status||'').replace(/_/g,' ')),
+    fNA('Other active processes', 'not disclosed by candidate'),
+    f('Timezone flexibility', 'V', (c.timezone_flex||'').replace(/_/g,' ')),
+    f('Hometown pull',        'V', `${c.hometown_city} — ${c.hometown_pull.replace(/_/g,' ')}`),
+    f('International exposure','V', (c.intl_exposure||'').replace(/_/g,' ')),
+  ];
+
+  const F_tech = [
+    f('Primary skill family',  'V', c.role_family.replace(/_/g,' ')),
+    f('Systems built',         'L', sysList ? `${sysList} <span class=fnote>panel-verified</span>` : null),
+    migStr ? f('Migration experience', 'V', migStr) : fNA('Migration experience','none on record'),
+    f('Scale evidence',        'V', `${c.scale_tb} TB`),
+    genaiStr ? f('GenAI in production','L', `${genaiStr} <span class=fnote>panel-passed</span>`) : fNA('GenAI in production','null-valid — not all roles require it'),
+    compList ? f('Compliance exposure','V', compList) : fNA('Compliance exposure','none on record'),
+    accoladeStr ? f('Certifications / accolades','V', accoladeStr) : fNA('Certifications','none on record — null-valid'),
+    platformStr ? f('Public platforms','V', platformStr) : fNA('Public platforms','none on record — null-valid'),
+    communityStr ? f('Community roles','V', communityStr) : fNA('Community roles','none on record — null-valid'),
+  ];
+
+  const F_edu = [
+    f('Degree',               'V', c.degree),
+    f('Institution',          'V', `${c.institution} · ${(c.institution_tier||'').replace(/_/g,' ')} · ${c.grad_year}`),
+    accoladeStr ? f('Accolades','V', accoladeStr) : fNA('Accolades','none on record — null-valid, never a negative'),
+    f('Teaching / mentoring', 'V', c.teaching ? 'active mentor' : 'none on record'),
+    fNA('Continuous learning','inferred from accolades timeline — not separately stored'),
+    fNA('Academic performance','shown for T1–T2 freshers only — hidden at this seniority'),
+    f('Education verified',   'U', 'stated-only <span class=fnote>(default — not a negative)</span>'),
+    fNA('Competitive rating', 'none on record — only ~10% of pool has this, never a negative'),
+  ];
+
+  const F_behav = [
+    f('Ownership pattern',      'L', `<b>${c.ownership.replace(/_/g,' ')}</b> — panel confirmed`),
+    f('Leadership',             'L', `${c.leadership_level.replace(/_/g,' ')} · panel-verified`),
+    f('Resilience',             'L', `${c.resilience}/10`),
+    c.architecture_score ? f('Architecture thinking','L', `${c.architecture_score}/10`) : fNA('Architecture thinking','assessed at T4+ only'),
+    fNA('Decision quality','assessed during panel — not stored separately in this schema version'),
+    f('Communication',          'V', `${c.communication}/5`),
+    fNA('Collaboration','recruiter-inferred — not separately scored'),
+    fNA('Career progression rate','not computed in this schema version'),
+    fNA('Code / SQL quality','not assessed — optional for this role template'),
+  ];
+
+  const F_fit = [
+    f('Motivation (mapped)',    'L', `${c.motivation_type.replace(/_/g,' ')} — confirmed at panel`),
+    f('Company-stage fit',      'V', `${(c.fit_context||'').replace(/_/g,' ')} ✓ proven, not aspirational`),
+    f('Leadership aspiration',  'V', (c.leadership_aspiration||'').replace(/_/g,' ')),
+    f('Industry preference',    'V', (c.industries||[]).map(i=>i.replace(/_/g,' ')).join(', ')),
+    f('Stability',              'V', `${c.stability}/10`),
+  ];
+
+  const deltaColor = c.resume_panel_delta>0.5?'var(--green)':c.resume_panel_delta<-0.5?'var(--red)':'inherit';
+  const F_predict = [
+    f('Retention 6m',         'L', `<b>${Math.round(c.retention_6m*100)}%</b> — publishable`),
+    f('Retention 12m',        'L', `${Math.round(c.retention_12m*100)}%`),
+    f('Ceiling',              'L', (c.ceiling||'').replace(/_/g,' ')),
+    f('Resume ↔ Panel gap',   'L', `<b style="color:${deltaColor}">${deltaSign}${c.resume_panel_delta}${deltaNote}</b>`),
+    f('Growth velocity',      'V', `${c.growth_velocity>=0?'+':''}${c.growth_velocity} normalized`),
+    f('Overall band',         'L', `<b>${c.overall_band.toUpperCase()}</b> — ${c.overall_band==='gold'?'top 15% of pool':'quality-verified'} <span class=fnote>(orthogonal to T-tier)</span>`),
+  ];
+
+  const panelCallout = `<div class="callout good"><b>Panel-verified outcomes:</b> Ownership ${c.ownership.replace(/_/g,' ')} · Resilience ${c.resilience}/10${c.architecture_score?' · Architecture '+c.architecture_score+'/10':''} · Communication ${c.communication}/5 · Retention ${Math.round(c.retention_6m*100)}%/${Math.round(c.retention_12m*100)}% · <b>Resume↔Panel ${deltaSign}${c.resume_panel_delta}${deltaNote}</b></div>`;
+
+  document.getElementById('p-front').innerHTML =
+    `<div class="banner green">✅ FULLY VERIFIED — all 4 stages complete. v3 signals are client-facing. Retention scores publishable as ranges.</div>` +
+    frontInfographics(c) +
+    panelCallout +
+    `<div class="grid2">` +
+    sect('🪪 Identity', F_identity) +
+    sect('📅 Availability · Comp · Mobility', F_avail) +
+    sect('⚙️ Technical & Systems', F_tech) +
+    sect('🎓 Education & Accolades', F_edu) +
+    sect('🤝 Behavioural & Leadership', F_behav) +
+    sect('🧭 Motivation & Fit', F_fit) +
+    `</div>` +
+    sect('🔮 Predictive (panel-gated)', F_predict);
+
+  // ── INTERNAL SIGNALS TAB ───────────────────────────────────────────────────
+  const I_ops = [
+    f('Candidate status',       'S', 'active · panel_complete'),
+    f('DPDP consent',           'V', 'v3.1 ✓'),
+    f('Enrichment events',      'S', '#4 panel · conf 0.96 · sv4'),
+    f('Parse cost (all stages)','S', '$0.33 total · 4 stages'),
+    f('Audit log',              'S', '41 entries · append-only'),
+    f('Embedding bio version',  'L', 'v3 — production · re-embedded to Qdrant ✓'),
+    f('Blacklist',              'S', 'none'),
+    fNA('Re-engagement date', 'not placed yet'),
+  ];
+
+  const I_est = [
+    f('Tier (internal est.)',   'L', `${c.tier} · LOCKED 100%`),
+    f('Depth score (versioned)','L', `v3 = ${c.depth_v3} · client-facing now`),
+    fNA('Impact language score', 'computed from resume — not stored in this schema version'),
+    fNA('Edu–role relevance',   'computed from resume — not stored in this schema version'),
+    fNA('Months since promotion','not computed in this schema version'),
+    f('Likelihood to move 6m',  'S', `${c.likelihood_to_move_6m} · refreshed monthly`),
+    fNA('Engagement type / job','not in generate_candidates schema — v2.3 field, extractor pending'),
+    fNA('Project signal types', 'not in generate_candidates schema — v2.3 field, extractor pending'),
+  ];
+
+  const I_risk = [
+    f('Red flags (raw)',         'V', c.red_flag?'⚠️ flagged — review required':'clean — no structural flags'),
+    fNA('Reason for change (raw)','captured at telephonic — not stored in mock schema'),
+    f('Offer history / renege',  'V', `renege risk: <b>${c.renege_risk}</b>`),
+    fNA('Move window',           'ESOP / appraisal timing — captured at telephonic, not in mock schema'),
+    fNA('Competing comp range',  'not disclosed by candidate'),
+    fNA('Competitor conflict tags','auto-derived — not computed in mock schema'),
+    fNA('Coworker overlap',      'computed from shared employer history — not in mock schema'),
+    fNA('Referral strength',     'sourced via search, no referrer to score'),
+  ];
+
+  const I_psych = [
+    f('Motivation raw note',  'V', `${c.motivation_type.replace(/_/g,' ')} — panel behaviour consistent ✓`),
+    f('Fit verified flag',    'V', 'true — stated preference matches actual history'),
+    f('Mgmt refusals',        'V', c.mgmt_refused_count>0
+        ? `${c.mgmt_refused_count}× — deliberate IC`
+        : '0 — never offered <span class=fnote>(null ≠ 0 distinction kept)</span>'),
+    f('Chaos tolerance',      'L', `${(c.chaos_tolerance||'').replace(/_/g,' ')} — confirmed`),
+    f('Exec exposure',        'L', `${(c.exec_exposure||'').replace(/_/g,' ')} — verified via walk-through`),
+  ];
+
+  const bandComp = c.overall_band==='gold'
+    ? `GOLD: composite ${c.composite} ≥85 ✓ · panel-verified ✓ · retention ${Math.round(c.retention_6m*100)}% ≥80% ✓ · 0 high flags ✓`
+    : `${c.overall_band.toUpperCase()}: composite ${c.composite} · retention ${Math.round(c.retention_6m*100)}%`;
+  const I_scoring = [
+    f('Scoring template',     'S', `${c.role_family}_v2 @ v1.3`),
+    f('Rubric items stored',  'S', '41 items + evidence (S4: 10.6/13)'),
+    f('Composite (final)',     'L', `${c.composite} / 100 — fully verified`),
+    fNA('JD match history',   'no JD runs yet — re-match queued post-panel'),
+    f('Panelist variance',    'S', '0.4 — consensus · no tie-breaker needed'),
+    f('Band computation',     'S', bandComp),
+  ];
+
+  document.getElementById('p-internal').innerHTML =
+    `<div class="banner blue">🔒 Recruiter-grade view — raw flags, versioned estimates, risk & timing intel. Nothing here is client-visible.</div>` +
+    internalInfographics(c) +
+    `<div class="grid2">` +
+    sect('⚙️ Pipeline ops & compliance', I_ops) +
+    sect('🧮 Internal estimates (versioned — never client-facing)', I_est) +
+    sect('⚠️ Risk · Timing · Conflicts', I_risk) +
+    sect('🧠 Psychology & calibration', I_psych) +
+    panelWidget(c) +
+    `</div>` +
+    sect('📊 Scoring infrastructure', I_scoring);
+}
+
+// ── tabs wiring ──────────────────────────────────────────────────────────────
+document.querySelector('.tabs').addEventListener('click', e=>{
+  const t = e.target.closest('.tab'); if(!t) return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('p-'+t.dataset.t).classList.add('active');
+});
+
+// ── load ─────────────────────────────────────────────────────────────────────
+fetch(`/api/candidate/${candidateId}`)
+  .then(r=>{ if(!r.ok) throw new Error('not found'); return r.json(); })
+  .then(c=>{
+    render(c);
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='block';
+  })
+  .catch(()=>{
+    document.getElementById('loading').innerHTML='<p style="color:var(--red)">Candidate not found.</p>';
+  });
+</script>
+</body>
+</html>

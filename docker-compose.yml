@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    expose:
+      - "6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    depends_on:
+      - qdrant
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - PORT=8001
+    env_file:
+      - .env
+
+volumes:
+  qdrant_storage:
