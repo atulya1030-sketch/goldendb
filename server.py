@@ -1218,3 +1218,248 @@ async def source_add(body: dict):
     }
     result = await asyncio.to_thread(upsert_candidate, payload)
     return {"candidate_id": candidate_id, "status": "added"}
+
+# ── live search pipeline ───────────────────────────────────────────────────────
+from datetime import datetime as _dt
+
+def _yoe_from_github(profile: dict) -> float:
+    """Estimate years of experience from GitHub account age."""
+    try:
+        created = _dt.strptime(profile["created_at"][:10], "%Y-%m-%d")
+        age     = (_dt.now() - created).days / 365
+        return round(max(1.0, age - 1.5), 1)   # subtract ~1.5 study years
+    except Exception:
+        return 3.0
+
+def exec_live_search(args: dict) -> str:
+    from concurrent.futures import ThreadPoolExecutor
+    location      = args.get("location", "")
+    skills        = args.get("skills", [])
+    role_keywords = args.get("role_keywords", [])
+    min_followers = args.get("min_followers", 30)
+    limit         = min(int(args.get("limit", 8)), 12)
+
+    # build github query
+    parts = []
+    if location:      parts.append(f"location:{location}")
+    if role_keywords: parts.append(" ".join(role_keywords[:2]))
+    if skills:        parts.append(" ".join(skills[:3]))
+    parts.append(f"followers:>{min_followers}")
+    gh_q = " ".join(parts)
+
+    items  = gh_search(gh_q, 100)
+    logins = [i["login"] for i in items[:50]]
+
+    with ThreadPoolExecutor(max_workers=10) as ex:
+        profiles = [p for p in ex.map(gh_profile, logins) if isinstance(p, dict)]
+
+    profiles.sort(key=lambda p: -(p.get("followers") or 0))
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        profile_repos = list(ex.map(_fetch_repos_for_profile, profiles[:25]))
+
+    results = []
+    for profile, repos in profile_repos:
+        s = score_profile(profile, repos, skills)
+        if s < 4:
+            continue
+        lang_counts  = Counter(r.get("language") for r in repos if r.get("language"))
+        top_langs    = [l for l, _ in lang_counts.most_common(6)]
+        total_stars  = sum(r.get("stargazers_count", 0) for r in repos)
+        yoe_est      = _yoe_from_github(profile)
+        skills_dict  = {lang: {"score": 6, "years": max(1, int(yoe_est * 0.6)),
+                                "recency": time.strftime("%Y-%m")} for lang in top_langs}
+        derived      = compute_derived({"yoe": yoe_est, "yoe_domain": yoe_est * 0.7,
+                                        "skills": skills_dict})
+        apollo       = mock_apollo(profile)
+        loc          = profile.get("location") or "India"
+        city         = next((c.title() for c in INDIA_CITIES if c in loc.lower()), loc)
+
+        # build & upsert full payload immediately
+        candidate_id = next_candidate_id()
+        payload = {
+            "candidate_id":     candidate_id,
+            "full_name":        (profile.get("name") or profile["login"]).strip(),
+            "current_title":    (profile.get("bio") or "").split("\n")[0][:60] or "Engineer",
+            "current_company":  apollo["organization"],
+            "company_tier":     "unknown",
+            "role_family":      "data_engineering",
+            "location_city":    city,
+            "hometown_city":    None,
+            "hometown_pull":    "open",
+            "yoe":              yoe_est,
+            "yoe_domain":       round(yoe_est * 0.7, 1),
+            "degree":           None, "institution": None,
+            "institution_tier": None, "grad_year": None,
+            "skills":           skills_dict,
+            "systems_built":    [], "compliance":  [],
+            "scale_tb":         None, "genai_production": None, "migration": None,
+            "accolades":        [], "teaching": False,
+            "oss_maintainer":   total_stars >= 50,
+            "community_roles":  [],
+            "notice_days":      60, "industries": [], "intl_exposure": "none",
+            "ctc_current":      None, "ctc_expected_min": None, "ctc_expected_max": None,
+            "timezone_flex":    "ist_only",
+            "email":            apollo["email"],
+            "email_status":     apollo["email_status"],
+            "phone":            apollo["phone"],
+            "linkedin_url":     apollo["linkedin_url"],
+            "github_login":     profile["login"],
+            "github_url":       profile.get("html_url"),
+            "github_followers": profile.get("followers", 0),
+            "github_stars":     total_stars,
+            "pipeline_stage":   "sourced",
+            "signal_version":   1,
+            "source":           "live_search",
+            "gh_score":         s,
+            **derived,
+        }
+        upsert_candidate(payload)
+
+        results.append({
+            "candidate_id":    candidate_id,
+            "full_name":       payload["full_name"],
+            "current_title":   payload["current_title"],
+            "current_company": payload["current_company"],
+            "location_city":   city,
+            "tier":            derived["tier"],
+            "overall_band":    derived["overall_band"],
+            "composite":       derived["composite"],
+            "yoe_est":         yoe_est,
+            "top_languages":   top_langs,
+            "github_stars":    total_stars,
+            "github_followers":profile.get("followers", 0),
+            "github_url":      profile.get("html_url"),
+            "email":           apollo["email"],
+            "email_status":    apollo["email_status"],
+            "phone":           apollo["phone"],
+            "linkedin_url":    apollo["linkedin_url"],
+            "gh_score":        s,
+        })
+
+        if len(results) >= limit:
+            break
+
+    return json.dumps(results, ensure_ascii=False)
+
+LIVE_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "live_search",
+            "description": (
+                "Search GitHub live for AI/data engineers, enrich with Apollo contact data, "
+                "save all results to GoldenDB automatically, and return candidate cards. "
+                "Call this for ANY search or find request on this interface."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query":         {"type": "string"},
+                    "location":      {"type": "string", "description": "Indian city"},
+                    "skills":        {"type": "array", "items": {"type": "string"}},
+                    "role_keywords": {"type": "array", "items": {"type": "string"}},
+                    "min_followers": {"type": "integer", "default": 30},
+                    "limit":         {"type": "integer", "default": 8},
+                },
+                "required": ["query"],
+            },
+        },
+    },
+]
+
+LIVE_SYSTEM = """You are GoldenDB Live — a recruiter intelligence interface that sources candidates directly from GitHub and enriches them with Apollo contact data in real time.
+
+Every candidate is saved to the GoldenDB database automatically. Scores (tier, band, composite) are estimated from GitHub signals — not panel-verified.
+
+Rules:
+- ALWAYS call live_search before answering any search request.
+- Format each candidate as:
+  **[Full Name](/profile/GDB-XXXX)** — Title · Company · City
+  Tier: {tier} · Band: {band} · Composite: {composite}/100 *(estimated)*
+  🛠 {top languages}  ★ {stars}  ↑ {followers} followers
+  ✉ {email} ({verified/guessed}) · 📱 {phone} · [LinkedIn →]({url})
+
+- Always note scores are GitHub-estimated, not panel-verified.
+- After results, offer: "Want me to search a different city or refine the skills?"
+- If email_status is guessed, note it needs verification before outreach.
+- Candidates are saved to GoldenDB as stage-1 and can be moved through the full pipeline."""
+
+@app.get("/live", response_class=HTMLResponse)
+async def live_page():
+    return (STATIC / "live.html").read_text(encoding="utf-8")
+
+@app.post("/api/live-chat")
+async def live_chat(req: ChatRequest):
+    messages = [{"role": "system", "content": LIVE_SYSTEM}]
+    for m in req.messages:
+        messages.append({"role": m["role"], "content": m["content"]})
+
+    async def generate():
+        loop  = asyncio.get_event_loop()
+        queue: asyncio.Queue = asyncio.Queue()
+
+        def run_loop():
+            try:
+                while True:
+                    stream = ai_client.chat.completions.create(
+                        model=MODEL, tools=LIVE_TOOLS,
+                        messages=messages, stream=True,
+                    )
+                    text_acc       = ""
+                    tool_calls_acc = {}
+                    finish_reason  = None
+
+                    for chunk in stream:
+                        choice = chunk.choices[0] if chunk.choices else None
+                        if not choice: continue
+                        finish_reason = choice.finish_reason or finish_reason
+                        delta = choice.delta
+                        if delta.content:
+                            text_acc += delta.content
+                            loop.call_soon_threadsafe(queue.put_nowait,
+                                {"type": "text", "content": delta.content})
+                        if delta.tool_calls:
+                            for tc in delta.tool_calls:
+                                idx = tc.index
+                                if idx not in tool_calls_acc:
+                                    tool_calls_acc[idx] = {"id": tc.id or "", "name": tc.function.name if tc.function else "", "arguments": ""}
+                                if tc.id: tool_calls_acc[idx]["id"] = tc.id
+                                if tc.function:
+                                    if tc.function.name: tool_calls_acc[idx]["name"] = tc.function.name
+                                    if tc.function.arguments: tool_calls_acc[idx]["arguments"] += tc.function.arguments
+
+                    if finish_reason != "tool_calls":
+                        if text_acc: messages.append({"role": "assistant", "content": text_acc})
+                        loop.call_soon_threadsafe(queue.put_nowait, {"type": "done"})
+                        return
+
+                    tool_call_objs = [{"id": tool_calls_acc[i]["id"], "type": "function",
+                                       "function": {"name": tool_calls_acc[i]["name"],
+                                                    "arguments": tool_calls_acc[i]["arguments"]}}
+                                      for i in sorted(tool_calls_acc)]
+                    messages.append({"role": "assistant", "content": text_acc or None,
+                                     "tool_calls": tool_call_objs})
+
+                    for tc in tool_call_objs:
+                        name = tc["function"]["name"]
+                        try:    args = json.loads(tc["function"]["arguments"])
+                        except: args = {}
+                        loop.call_soon_threadsafe(queue.put_nowait,
+                            {"type": "tool_call", "name": name, "input": args})
+                        try:    result = {"live_search": exec_live_search}[name](args)
+                        except Exception as e: result = json.dumps({"error": str(e)})
+                        messages.append({"role": "tool", "tool_call_id": tc["id"], "content": result})
+
+            except Exception as e:
+                loop.call_soon_threadsafe(queue.put_nowait, {"type": "error", "content": str(e)})
+                loop.call_soon_threadsafe(queue.put_nowait, {"type": "done"})
+
+        threading.Thread(target=run_loop, daemon=True).start()
+        while True:
+            event = await queue.get()
+            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            if event["type"] == "done": break
+
+    return StreamingResponse(generate(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
